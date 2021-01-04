@@ -1,0 +1,6 @@
+﻿segregation.spatial.compute\_segregation\_profile
+=================================================
+
+.. currentmodule:: segregation.spatial
+
+.. autofunction:: compute_segregation_profile

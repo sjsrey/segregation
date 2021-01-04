@@ -1,0 +1,6 @@
+﻿segregation.util.project\_gdf
+=============================
+
+.. currentmodule:: segregation.util
+
+.. autofunction:: project_gdf

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>segregation.util.util &#8212; segregation v1.5.0 Manual</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pysal-styles.css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/pysal_favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../_static/js/jquery-1.12.4.min.js "></script>
+<script type="text/javascript" src="../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-3.4.1/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-sphinx.js "></script>
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          segregation</a>
+        <span class="navbar-text navbar-version pull-left"><b>1.5.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+                <li><a href="../../../installation.html">Installation</a></li>
+                <li><a href="../../../api.html">API</a></li>
+                <li><a href="../../../references.html">References</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="body col-md-12 content" role="main">
+      
+  <h1>Source code for segregation.util.util</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Useful functions for segregation metrics</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Levi Wolf &lt;levi.john.wolf@gmail.com&gt;, Renan X. Cortes &lt;renanc@ucr.edu&gt;, and Eli Knaap &lt;ek@knaaptime.com&gt;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">CRS</span>
+
+
+<span class="k">def</span> <span class="nf">_nan_handle</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if dataframe has nan values.</span>
+<span class="sd">    Raise an informative error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">df</span><span class="p">))</span> <span class="o">==</span> <span class="s2">&quot;&lt;class &#39;geopandas.geodataframe.GeoDataFrame&#39;&gt;&quot;</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">!=</span> <span class="n">df</span><span class="o">.</span><span class="n">_geometry_column_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;There are NAs present in the input data. NAs should be handled (e.g. dropping or replacing them with values) before using this function.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">_generate_counterfactual</span><span class="p">(</span>
+    <span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">group_pop_var</span><span class="p">,</span> <span class="n">total_pop_var</span><span class="p">,</span> <span class="n">counterfactual_approach</span><span class="o">=</span><span class="s2">&quot;composition&quot;</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a counterfactual variables.</span>
+
+<span class="sd">    Given two contexts, generate counterfactual distributions for a variable of</span>
+<span class="sd">    interest by simulating the variable of one context into the spatial</span>
+<span class="sd">    structure of the other.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data1 : pd.DataFrame or gpd.DataFrame</span>
+<span class="sd">        Pandas or Geopandas dataframe holding data for context 1</span>
+
+<span class="sd">    data2 : pd.DataFrame or gpd.DataFrame</span>
+<span class="sd">        Pandas or Geopandas dataframe holding data for context 2</span>
+
+<span class="sd">    group_pop_var : str</span>
+<span class="sd">        The name of variable in both data that contains the population size of the group of interest</span>
+
+<span class="sd">    total_pop_var : str</span>
+<span class="sd">        The name of variable in both data that contains the total population of the unit</span>
+
+<span class="sd">    approach : str, [&quot;composition&quot;, &quot;share&quot;, &quot;dual_composition&quot;]</span>
+<span class="sd">        Which approach to use for generating the counterfactual.</span>
+<span class="sd">        Options include &quot;composition&quot;, &quot;share&quot;, or &quot;dual_composition&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    two DataFrames</span>
+<span class="sd">        df1 and df2  with appended columns &#39;counterfactual_group_pop&#39;, &#39;counterfactual_total_pop&#39;, &#39;group_composition&#39; and &#39;counterfactual_composition&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">group_pop_var</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">total_pop_var</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;group_pop_var and total_pop_var must be strings&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">group_pop_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data1</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">total_pop_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data1</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;group_pop_var and total_pop_var must be variables of data1&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">group_pop_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data2</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">total_pop_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data2</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;group_pop_var and total_pop_var must be variables of data2&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">data1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">data1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Group of interest population must equal or lower than the total population of the units in data1.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">data2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">data2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Group of interest population must equal or lower than the total population of the units in data2.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">df1</span> <span class="o">=</span> <span class="n">data1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">data2</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">counterfactual_approach</span> <span class="o">==</span> <span class="s2">&quot;composition&quot;</span><span class="p">:</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df2</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">counterfactual_approach</span> <span class="o">==</span> <span class="s2">&quot;share&quot;</span><span class="p">:</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">-</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">-</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Rescale due to possibility of the summation of the counterfactual share values being grater or lower than 1</span>
+        <span class="c1"># CT stands for Correction Term</span>
+        <span class="n">CT1_2_group</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df2</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">CT2_1_group</span> <span class="o">=</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df2</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">/</span> <span class="n">CT1_2_group</span>
+            <span class="o">*</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">/</span> <span class="n">CT2_1_group</span>
+            <span class="o">*</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Rescale due to possibility of the summation of the counterfactual share values being grater or lower than 1</span>
+        <span class="c1"># CT stands for Correction Term</span>
+        <span class="n">CT1_2_compl</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">CT2_1_compl</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">/</span> <span class="n">CT1_2_compl</span>
+            <span class="o">*</span> <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_share&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">/</span> <span class="n">CT2_1_compl</span>
+            <span class="o">*</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">counterfactual_approach</span> <span class="o">==</span> <span class="s2">&quot;dual_composition&quot;</span><span class="p">:</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">-</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">-</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_pop_var&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df2</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_composition&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_composition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;compl_composition&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;compl_composition&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_compl_pop&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df1</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df1</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;group_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df2</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">]</span> <span class="o">/</span> <span class="n">df2</span><span class="p">[</span><span class="n">total_pop_var</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df1</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_composition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_group_pop&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;counterfactual_total_pop&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">df1</span> <span class="o">=</span> <span class="n">df1</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">,</span> <span class="n">total_pop_var</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">group_pop_var</span><span class="p">,</span> <span class="n">total_pop_var</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df1</span><span class="p">,</span> <span class="n">df2</span>
+
+
+<span class="k">def</span> <span class="nf">is_crs_utm</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine if a CRS is a UTM CRS</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : dict or string or pyproj.CRS</span>
+<span class="sd">        a coordinate reference system</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        True if crs is UTM, False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">crs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">crs_obj</span> <span class="o">=</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">crs_obj</span><span class="o">.</span><span class="n">coordinate_operation</span> <span class="ow">and</span> <span class="n">crs_obj</span><span class="o">.</span><span class="n">coordinate_operation</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span>
+        <span class="s2">&quot;UTM&quot;</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="project_gdf"><a class="viewcode-back" href="../../../generated/segregation.util.project_gdf.html#segregation.util.project_gdf">[docs]</a><span class="k">def</span> <span class="nf">project_gdf</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">to_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_latlong</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    lovingly copied from OSMNX &lt;https://github.com/gboeing/osmnx/blob/master/osmnx/projection.py&gt;</span>
+
+<span class="sd">    Project a GeoDataFrame to the UTM zone appropriate for its geometries&#39;</span>
+<span class="sd">    centroid.</span>
+<span class="sd">    The simple calculation in this function works well for most latitudes, but</span>
+<span class="sd">    won&#39;t work for some far northern locations like Svalbard and parts of far</span>
+<span class="sd">    northern Norway.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gdf : GeoDataFrame</span>
+<span class="sd">        the gdf to be projected</span>
+<span class="sd">    to_crs : dict or string or pyproj.CRS</span>
+<span class="sd">        if not None, just project to this CRS instead of to UTM</span>
+<span class="sd">    to_latlong : bool</span>
+<span class="sd">        if True, projects to latlong instead of to UTM</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    GeoDataFrame</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;You cannot project an empty GeoDataFrame.&quot;</span>
+
+    <span class="c1"># else, project the gdf to UTM</span>
+    <span class="c1"># if GeoDataFrame is already in UTM, just return it</span>
+    <span class="k">if</span> <span class="n">is_crs_utm</span><span class="p">(</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">gdf</span>
+
+    <span class="c1"># calculate the centroid of the union of all the geometries in the</span>
+    <span class="c1"># GeoDataFrame</span>
+    <span class="n">avg_longitude</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unary_union</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">x</span>
+
+    <span class="c1"># calculate the UTM zone from this avg longitude and define the UTM</span>
+    <span class="c1"># CRS to project</span>
+    <span class="n">utm_zone</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">avg_longitude</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">utm_crs</span> <span class="o">=</span> <span class="s2">&quot;+proj=utm +zone=</span><span class="si">{}</span><span class="s2"> +ellps=WGS84 +datum=WGS84 +units=m +no_defs&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">utm_zone</span>
+    <span class="p">)</span>
+
+    <span class="c1"># project the GeoDataFrame to the UTM CRS</span>
+    <span class="n">projected_gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">utm_crs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">projected_gdf</span></div>
+
+
+<span class="k">def</span> <span class="nf">_dep_message</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="n">when</span><span class="o">=</span><span class="s2">&quot;2020-01-31&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;2.1.0&quot;</span><span class="p">):</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Deprecated (</span><span class="si">%s</span><span class="s2">): </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">original</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot; is being renamed to </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="n">replacement</span>
+    <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot; </span><span class="si">%s</span><span class="s2"> will be removed on </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">when</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">msg</span>
+
+
+<span class="k">class</span> <span class="nc">DeprecationHelper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_target</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Deprecated&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_target</span> <span class="o">=</span> <span class="n">new_target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
+    <span class="k">def</span> <span class="nf">_warn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+        <span class="n">warn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_warn</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_target</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_warn</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_target</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+      
+    </p>
+    <p>
+        &copy; Copyright 2018, pysal developers.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.4.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
